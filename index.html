@@ -1,42 +1,87 @@
 <!DOCTYPE html>
-<div id="container"></div>
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script type="module">
+<html lang="en">
 
-  // Declare the chart dimensions and margins.
-  const width = 640;
-  const height = 400;
-  const marginTop = 20;
-  const marginRight = 20;
-  const marginBottom = 30;
-  const marginLeft = 40;
+<head>
+  <meta charset="UTF-8" />
+  <title>D3 Pie Chart</title>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
 
-  // Declare the x (horizontal position) scale.
-  const x = d3.scaleUtc()
-    .domain([new Date("2023-01-01"), new Date("2024-01-01")])
-    .range([marginLeft, width - marginRight]);
+    .arc path {
+      stroke: white;
+    }
 
-  // Declare the y (vertical position) scale.
-  const y = d3.scaleLinear()
-    .domain([0, 100])
-    .range([height - marginBottom, marginTop]);
+    .arc text {
+      font-size: 12px;
+      text-anchor: middle;
+      fill: white;
+    }
+  </style>
+</head>
 
-  // Create the SVG container.
-  const svg = d3.create("svg")
-    .attr("width", width)
-    .attr("height", height);
+<body>
+  <svg width="500" height="500"></svg>
+  <!-- Load D3 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // Sample data array (replace or load dynamically)
+    const data = [
+      { label: "A", value: 30 },
+      { label: "B", value: 70 },
+      { label: "C", value: 45 },
+      { label: "D", value: 65 },
+      { label: "E", value: 20 }
+    ];
 
-  // Add the x-axis.
-  svg.append("g")
-    .attr("transform", `translate(0,${height - marginBottom})`)
-    .call(d3.axisBottom(x));
+    // SVG dimensions
+    const svg = d3.select("svg"),
+      width = +svg.attr("width"),
+      height = +svg.attr("height"),
+      radius = Math.min(width, height) / 2;
 
-  // Add the y-axis.
-  svg.append("g")
-    .attr("transform", `translate(${marginLeft},0)`)
-    .call(d3.axisLeft(y));
+    const g = svg
+      .append("g")
+      .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-  // Append the SVG element.
-  container.append(svg.node());
+    // Color scale
+    const color = d3.scaleOrdinal()
+      .domain(data.map(d => d.label))
+      .range(d3.schemeCategory10);
 
-</script>
+    // Pie generator
+    const pie = d3.pie()
+      .sort(null)
+      .value(d => d.value);
+
+    // Arc generator
+    const arc = d3.arc()
+      .innerRadius(0)
+      .outerRadius(radius - 10);
+
+    // Label arc for positioning
+    const labelArc = d3.arc()
+      .innerRadius(radius * 0.7)
+      .outerRadius(radius * 0.7);
+
+    // Bind data and draw slices
+    const arcs = g.selectAll(".arc")
+      .data(pie(data))
+      .enter()
+      .append("g")
+      .attr("class", "arc");
+
+    arcs.append("path")
+      .attr("d", arc)
+      .attr("fill", d => color(d.data.label));
+
+    // Add labels
+    arcs.append("text")
+      .attr("transform", d => `translate(${labelArc.centroid(d)})`)
+      .text(d => d.data.label);
+
+  </script>
+</body>
+
+</html>
