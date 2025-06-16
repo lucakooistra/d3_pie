@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D3 Pie Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    svg {
+      margin-top: 1rem;
+    }
+
+    button {
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>D3 Pie Chart Example</h1>
+  <div id="chart"></div>
+  <button id="applesBtn">Show Apples</button>
+  <button id="orangesBtn">Show Oranges</button>
+  <script>
+    const width = 500;
+
+    const data = d3.tsvParse(`apples\toranges
+35\t40
+25\t25
+20\t22
+10\t8
+5\t2
+5\t2`, d3.autoType);
+
+    function createChart(data, width) {
+      const height = Math.min(500, width / 2);
+      const outerRadius = height / 2 - 10;
+      // Removed innerRadius calculation since it will be zero
+      const color = d3.scaleOrdinal(d3.schemeObservable10);
+
+      const svg = d3.create("svg")
+        .attr("viewBox", [-width / 2, -height / 2, width, height]);
+
+      const arc = d3.arc()
+        .innerRadius(0)              // <-- here is the fix for pie chart
+        .outerRadius(outerRadius);
+
+      const pie = d3.pie().sort(null).value(d => d["apples"]);
+
+      const path = svg.datum(data).selectAll("path")
+        .data(pie)
+        .join("path")
+        .attr("fill", (d, i) => color(i))
+        .attr("d", arc)
+        .each(function (d) { this._current = d; });
+
+      function change(value) {
+        pie.value(d => d[value]);
+        path.data(pie);
+        path.transition().duration(750).attrTween("d", arcTween);
+      }
+
+      function arcTween(a) {
+        const i = d3.interpolate(this._current, a);
+        this._current = i(0);
+        return t => arc(i(t));
+      }
+
+      return Object.assign(svg.node(), { change });
+    }
+
+    const chart = createChart(data, width);
+    document.getElementById("chart").appendChild(chart);
+
+    document.getElementById("applesBtn").addEventListener("click", () => chart.change("apples"));
+    document.getElementById("orangesBtn").addEventListener("click", () => chart.change("oranges"));
+  </script>
+</body>
+
+</html>
