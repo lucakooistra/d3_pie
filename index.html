@@ -3,39 +3,66 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>D3 Pie Chart</title>
+  <title>D3 Pie Chart with Labels and Leader Lines</title>
   <style>
     body {
       font-family: sans-serif;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .arc path {
-      stroke: white;
+    #container {
+      display: flex;
+      justify-content: center;
+      align-items: start;
+      gap: 40px;
+      margin-top: 20px;
     }
 
-    .arc text {
-      font-size: 12px;
-      text-anchor: middle;
+    svg {
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    text.inside-label {
       fill: white;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    text.outside-label {
+      font-weight: normal;
+      pointer-events: none;
+    }
+
+    polyline.leader-line {
+      fill: none;
+      stroke: black;
+      stroke-width: 1px;
+      opacity: 0.7;
     }
   </style>
 </head>
 
 <body>
-  <svg width="500" height="500"></svg>
-  <!-- Load D3 -->
+  <h1>Digit Frequency Pie Chart with Labels</h1>
+  <div>
+    <button id="btn-first">First Digit Frequencies</button>
+    <button id="btn-second">Second Digit Frequencies</button>
+  </div>
+  <div id="container">
+    <svg width="1000" height="800"></svg>
+  </div>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script>
-    // Sample data array (replace or load dynamically)
-    const data = [
-      { label: "A", value: 30 },
-      { label: "B", value: 70 },
-      { label: "C", value: 45 },
-      { label: "D", value: 65 },
-      { label: "E", value: 20 }
-    ];
-
-    // SVG dimensions
     const svg = d3.select("svg"),
       width = +svg.attr("width"),
       height = +svg.attr("height"),
@@ -45,42 +72,101 @@
       .append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-    // Color scale
-    const color = d3.scaleOrdinal()
-      .domain(data.map(d => d.label))
-      .range(d3.schemeCategory10);
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-    // Pie generator
     const pie = d3.pie()
       .sort(null)
       .value(d => d.value);
 
-    // Arc generator
     const arc = d3.arc()
       .innerRadius(0)
+      .outerRadius(radius - 40);
+
+    const arcOuter = d3.arc()
+      .innerRadius(radius - 40)
       .outerRadius(radius - 10);
 
-    // Label arc for positioning
-    const labelArc = d3.arc()
-      .innerRadius(radius * 0.7)
-      .outerRadius(radius * 0.7);
+    let fullData;
 
-    // Bind data and draw slices
-    const arcs = g.selectAll(".arc")
-      .data(pie(data))
-      .enter()
-      .append("g")
-      .attr("class", "arc");
+    fetch('data.json')
+      .then(res => res.json())
+      .then(json => {
+        fullData = json;
+        updateChart(fullData.first_digit_frequencies);
+      });
 
-    arcs.append("path")
-      .attr("d", arc)
-      .attr("fill", d => color(d.data.label));
+    function prepareData(freqObj) {
+      const total = Object.values(freqObj).reduce((a, b) => a + b, 0);
+      return Object.entries(freqObj).map(([label, value]) => ({
+        label,
+        value,
+        percent: (value / total) * 100
+      }));
+    }
 
-    // Add labels
-    arcs.append("text")
-      .attr("transform", d => `translate(${labelArc.centroid(d)})`)
-      .text(d => d.data.label);
+    function updateChart(freqObj, showLabels = true) {
+      const data = prepareData(freqObj);
 
+      // Bind data to groups
+      const arcs = g.selectAll(".arc")
+        .data(pie(data), d => d.data.label);
+
+      arcs.exit().remove();
+
+      const newArcs = arcs.enter()
+        .append("g")
+        .attr("class", "arc");
+
+      newArcs.append("path");
+
+      newArcs.append("text")
+        .attr("class", "inside-label")
+        .attr("text-anchor", "middle")
+        .attr("alignment-baseline", "middle")
+        .style("font-size", "12px")
+        .style("fill", "white");
+
+      newArcs.append("text")
+        .attr("class", "outside-label")
+        .style("font-size", "12px");
+
+      newArcs.append("polyline")
+        .attr("class", "leader-line");
+
+      const mergedArcs = newArcs.merge(arcs);
+
+      mergedArcs.select("path")
+        .transition()
+        .duration(500)
+        .attr("d", arc)
+        .attr("fill", d => color(d.data.label));
+
+      // Percentage labels inside slices
+      mergedArcs.select(".inside-label")
+        .transition()
+        .duration(500)
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .text(d => showLabels ? d.data.percent.toFixed(1) + "%" : undefined);
+
+      mergedArcs.select(".outside-label")
+        .transition()
+        .duration(500)
+        .attr("transform", d => {
+          const pos = arcOuter.centroid(d);
+          return `translate(${pos[0]},${pos[1]})`;
+        })
+        .attr("text-anchor", "middle")  // Center label on the arc point
+        .text(d => d.data.label);
+
+    }
+
+    document.getElementById("btn-first").addEventListener("click", () => {
+      updateChart(fullData.first_digit_frequencies);
+    });
+
+    document.getElementById("btn-second").addEventListener("click", () => {
+      updateChart(fullData.second_digit_frequencies, false);
+    });
   </script>
 </body>
 
