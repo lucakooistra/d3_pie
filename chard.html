@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D3 pie chard</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    button {
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #chart {
+      display: flex;
+      justify-content: center;
+      height: 80vh
+    }
+
+    text.label {
+      fill: white;
+      font-weight: bold;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    text.label-outside {
+      font-weight: bold;
+      font-size: 12px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>D3 Pie Chart Example</h1>
+  <div id="chart"></div>
+  <div id="chart-wrapper"></div>
+  <button id="btn">Show more</button>
+  <script>
+    const width = 500;
+
+    // Load numbers.json and use it for the chart
+    async function getJsonData() {
+      const response = await fetch('numbers.json');
+      const json = await response.json();
+      return json;
+    }
+
+    // Use the array directly for the chart
+    getJsonData().then((dataArr) => {
+      // Default to 'first' values
+      let chart = createChart(dataArr, width, 'first');
+      let secondChart = createChart(dataArr, width, 'second');
+
+      document.getElementById("chart").appendChild(chart);
+      document.getElementById("chart").appendChild(secondChart);
+
+      document.getElementById('btn').addEventListener("click", () => {
+        chart.change(true);
+        secondChart.change();
+      });
+    });
+
+
+
+    function getPercent(d, data, valueKey) {
+      const percent = (d.data[valueKey] / d3.sum(data, d => d[valueKey])) * 100;
+      return percent.toFixed(1) + "%";
+    }
+
+    function createChart(data, width, valueKey = 'first') {
+      const height = width; // Fixed height for simplicity
+      const outerRadius = height / 2 - 10;
+      const color = d3.scaleOrdinal(d3.schemeObservable10);
+
+      const svg = d3.create("svg")
+        .attr("viewBox", [-width / 2, -height / 2, width, height]);
+
+      const arc = d3.arc()
+        .innerRadius(0)
+        .outerRadius(outerRadius - 10);
+
+      const arcOuter = d3.arc()
+        .innerRadius(outerRadius)
+        .outerRadius(outerRadius);
+
+      const pie = d3.pie().sort(null).value(d => d[valueKey]);
+
+      let arcs = pie(data);
+
+      svg.datum(data).selectAll("path")
+        .data(arcs)
+        .join("path")
+        .attr("fill", (d, i) => color(i))
+        .attr("d", arc)
+        .each(function (d) { this._current = d; });
+
+      // Add a group for labels inside slices
+      const labelGroup = svg.append("g")
+        .attr("class", "labels");
+
+      const labelArc = svg.append("g")
+        .attr("class", "label-arc");
+
+      // Create label elements, initially for selected dataset
+      labelGroup.selectAll("text")
+        .data(arcs)
+        .join("text")
+        .attr("class", "label")
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "middle")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .text(d => getPercent(d, data, valueKey));
+
+      labelArc.selectAll('text')
+        .data(arcs)
+        .join('text')
+        .attr('class', 'label-outside')
+        .attr('dy', '0.35em')
+        .attr("transform", d => {
+          const pos = arcOuter.centroid(d);
+          return `translate(${pos[0]},${pos[1]})`;
+        })
+        .text(d => d.data.label);
+
+      if (valueKey === 'first') {
+        svg.attr('style', 'transform: translateX(400px);');
+      }
+
+      if (valueKey === 'second') {
+        svg.style('opacity', 0);
+        labelGroup.selectAll("text")
+          .remove()
+      }
+
+
+      function change(bool = false) {
+        let percents = labelGroup.selectAll("text")
+          .data(arcs)
+          .join()
+
+        if (bool) {
+          // Show labels for 'first'
+          svg.transition().duration(750).style('transform', 'translateX(0)');
+        } else {
+          // Hide labels for 'second'
+          svg.transition().duration(750).style('opacity', 1);
+          percents.remove();
+        }
+      }
+      return Object.assign(svg.node(), { change });
+    }
+  </script>
+</body>
+
+</html>
