@@ -110,7 +110,6 @@
         .data(arcs)
         .join("text")
         .attr("class", "label")
-        .attr("dy", "0.35em")
         .attr("text-anchor", "middle")
         .attr("transform", d => `translate(${arc.centroid(d)})`)
         .text(d => getPercent(d, data, valueKey));
@@ -119,7 +118,6 @@
         .data(arcs)
         .join('text')
         .attr('class', 'label-outside')
-        .attr('dy', '0.35em')
         .attr("transform", d => {
           const pos = arcOuter.centroid(d);
           return `translate(${pos[0]},${pos[1]})`;
