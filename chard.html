@@ -46,29 +46,22 @@
   <div id="chart"></div>
   <div id="chart-wrapper"></div>
   <button id="btn">Show more</button>
-  <script>
+  <script type="module">
     const width = 500;
 
-    // Load numbers.json and use it for the chart
-    async function getJsonData() {
-      const response = await fetch('numbers.json');
-      const json = await response.json();
-      return json;
-    }
+    const dataArr = await d3.json("numbers.json");
 
     // Use the array directly for the chart
-    getJsonData().then((dataArr) => {
-      // Default to 'first' values
-      let chart = createChart(dataArr, width, 'first');
-      let secondChart = createChart(dataArr, width, 'second');
+    // Default to 'first' values
+    let chart = createChart(dataArr, width, 'first');
+    let secondChart = createChart(dataArr, width, 'second');
 
-      document.getElementById("chart").appendChild(chart);
-      document.getElementById("chart").appendChild(secondChart);
+    document.getElementById("chart").appendChild(chart);
+    document.getElementById("chart").appendChild(secondChart);
 
-      document.getElementById('btn').addEventListener("click", () => {
-        chart.change(true);
-        secondChart.change();
-      });
+    document.getElementById('btn').addEventListener("click", () => {
+      chart.change(true);
+      secondChart.change();
     });
 
 

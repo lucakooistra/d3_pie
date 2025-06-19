@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>plot</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
+</head>
+
+<body>
+  <div id="myplot"></div>
+  <script type="module">
+    const data = await d3.csv("fruit.csv", d3.autoType);
+
+    const fruit = data.flatMap(d => data.columns.slice(1).map(fruit => ({
+      date: d.date,
+      fruit,
+      value: d[fruit]
+    })))
+
+    console.log(fruit);
+
+    const plot = Plot.plot({
+      x: { line: true, insetRight: 40 },
+      y: { domain: [30, 200], axis: null },
+      marks: [
+        Plot.line(fruit, { x: "date", y: "value", stroke: "fruit" }),
+        Plot.text(fruit, { x: "date", y: "value", text: "value", fill: "currentColor", stroke: "white", strokeWidth: 8 }),
+        Plot.text(fruit, Plot.selectLast({ x: "date", y: "value", text: "fruit", z: "fruit", textAnchor: "start", dx: 12, fontWeight: "bold" }))
+      ]
+    })
+    const div = document.querySelector("#myplot");
+    div.append(plot);
+
+
+  </script>
+</body>
+
+</html>
