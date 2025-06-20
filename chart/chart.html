@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>D3 pie chard</title>
+  <title>D3 pie chart</title>
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <style>
     body {
@@ -72,7 +72,7 @@
     }
 
     function createChart(data, width, valueKey = 'first') {
-      const height = width; // Fixed height for simplicity
+      const height = width;
       const outerRadius = height / 2 - 10;
       const color = d3.scaleOrdinal(d3.schemeObservable10);
 

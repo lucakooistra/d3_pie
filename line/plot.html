@@ -15,13 +15,15 @@
   <script type="module">
     const data = await d3.csv("numbers.csv", d3.autoType);
 
+    console.log('data', data);
+
     const numbers = data.flatMap(d => data.columns.slice(1).map(number => ({
       versie: d.version,
       number,
       value: d[number]
     })))
 
-    console.log(numbers);
+    console.log("transformed data", numbers);
 
     const plot = Plot.plot({
       x: { line: true, insetRight: 40 },
@@ -32,6 +34,7 @@
         Plot.text(numbers, Plot.selectLast({ x: "versie", y: "value", text: "number", z: "number", textAnchor: "start", dx: 12, fontWeight: "bold" }))
       ]
     })
+
     plot.style.width = "1000px";
     plot.style.height = "800px";
     plot.style.marginLeft = "auto";
