@@ -17,26 +17,30 @@
 
     console.log('data', data);
 
+
+
     const numbers = data.flatMap(d => data.columns.slice(1).map(number => ({
       versie: d.version,
       number,
-      value: d[number]
+      value: d[number],
     })))
+
 
     console.log("transformed data", numbers);
 
     const plot = Plot.plot({
-      x: { line: true, insetRight: 40 },
-      y: { domain: [-3, 50], axis: null },
+      height: 600,
+      x: { line: false, tickSize: 20 },
+      y: { domain: [0, 40], inset: 5 },
       marks: [
         Plot.line(numbers, { x: "versie", y: "value", stroke: "number" }),
-        Plot.text(numbers, { x: "versie", y: "value", text: "value", fill: "currentColor", stroke: "white", strokeWidth: 8 }),
-        Plot.text(numbers, Plot.selectLast({ x: "versie", y: "value", text: "number", z: "number", textAnchor: "start", dx: 12, fontWeight: "bold" }))
+        Plot.axisY({ tickFormat: d => d + "%", ticks: 8, dx: 120, tickSize: 20 }),
+        Plot.text(numbers, Plot.selectLast({ x: "versie", y: "value", text: "number", z: "number", textAnchor: "start", dx: 16, fontWeight: "bold" }))
       ]
     })
 
     plot.style.width = "1000px";
-    plot.style.height = "800px";
+    plot.style.marginTop = "3rem";
     plot.style.marginLeft = "auto";
     plot.style.marginRight = "auto";
 
